@@ -9,6 +9,7 @@ import net.minecraft.client.StringSplitter;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.BookEditScreen;
@@ -18,11 +19,9 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
-import net.minecraft.network.protocol.game.ServerboundEditBookPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.StringUtil;
-import net.minecraft.world.InteractionHand;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -33,7 +32,6 @@ import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Optional;
 
 public class BackstoryEditScreen extends Screen {
 
@@ -53,6 +51,9 @@ public class BackstoryEditScreen extends Screen {
     private boolean isModified;
     private boolean isSigning;
 
+    double lastClickedX;
+    double lastClickedY;
+
     long tickCount;
     private int currentPage;
     private final List<String> pages = Lists.newArrayList();
@@ -60,9 +61,10 @@ public class BackstoryEditScreen extends Screen {
     String name = "";
 
     private final TextFieldHelper pageEdit = new TextFieldHelper(this::getCurrentPageText, this::setCurrentPageText,
-            this::getClipboard, this::setClipboard, (p_280853_) -> p_280853_.length() < PlayerBackstory.CHAR_LIMIT
-            && this.font.wordWrapHeight(p_280853_, 114) <= 128);
+            this::getClipboard, this::setClipboard,s -> s.length() < PlayerBackstory.CHAR_LIMIT
+            && this.font.wordWrapHeight(s, 114) <= 128);
 
+    private EditBox titleEdit;
 
     private long lastClickTime;
     private int lastIndex = -1;
@@ -115,7 +117,7 @@ public class BackstoryEditScreen extends Screen {
     public void tick() {
         super.tick();
         tickCount++;
-        //frame = (int)((tickCount / 10)%7);
+        frame = (int)((tickCount / 10)%7);
     }
 
     protected void init() {
@@ -141,7 +143,29 @@ public class BackstoryEditScreen extends Screen {
         int j = 2;
         this.forwardButton = this.addRenderableWidget(new PageButton(i + 116, 159, true, p_98144_ -> this.pageForward(), true));
         this.backButton = this.addRenderableWidget(new PageButton(i + 43, 159, false, p_98113_ -> this.pageBack(), true));
+        initEditbox();
         this.updateButtonVisibility();
+    }
+
+    private void initEditbox() {
+        int i = (this.width - IMAGE_WIDTH) / 2;
+        int j = (this.height - IMAGE_HEIGHT) / 2;
+        this.titleEdit = new EditBox(this.font, i + 88, j + 40, 68, 12, Component.translatable("name"));
+        this.titleEdit.setCanLoseFocus(true);
+        this.titleEdit.setTextColor(-1);
+        this.titleEdit.setTextColorUneditable(-1);
+        this.titleEdit.setBordered(false);
+        this.titleEdit.setMaxLength(10);
+        this.titleEdit.setResponder(this::onNameChanged);
+        this.titleEdit.setValue("");
+        this.titleEdit.setTextColor(0xff00ff00);
+        this.addRenderableWidget(this.titleEdit);
+    }
+
+    protected void onNameChanged(String string) {
+        if (!string.isBlank()) {
+            name = string;
+        }
     }
 
     private void pageBack() {
@@ -398,7 +422,7 @@ public class BackstoryEditScreen extends Screen {
     public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderTransparentBackground(guiGraphics);
         int u = frame * IMAGE_WIDTH;
-        guiGraphics.blit(BOOK_LOCATION, (this.width - IMAGE_WIDTH) / 2, 2, u, 0, IMAGE_WIDTH, IMAGE_HEIGHT,
+        guiGraphics.blit(BOOK_LOCATION, (this.width - IMAGE_WIDTH+16) / 2, 2, u, 0, IMAGE_WIDTH, IMAGE_HEIGHT,
                 TEXTURE_WIDTH,TEXTURE_HEIGHT);
     }
 
@@ -486,8 +510,8 @@ public class BackstoryEditScreen extends Screen {
         } else {
             if (button == 0) {
                 long i = Util.getMillis();
-                DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
-                int j = bookeditscreen$displaycache.getIndexAtPosition(
+                DisplayCache displayCache1 = this.getDisplayCache();
+                int j = displayCache1.getIndexAtPosition(
                         this.font, this.convertScreenToLocal(new BookEditScreen.Pos2i((int)mouseX, (int)mouseY))
                 );
                 if (j >= 0) {
@@ -512,7 +536,8 @@ public class BackstoryEditScreen extends Screen {
 
     private void selectWord(int index) {
         String s = this.getCurrentPageText();
-        this.pageEdit.setSelectionRange(StringSplitter.getWordPosition(s, -1, index, false), StringSplitter.getWordPosition(s, 1, index, false));
+        this.pageEdit.setSelectionRange(StringSplitter.getWordPosition(s, -1, index, false),
+                StringSplitter.getWordPosition(s, 1, index, false));
     }
 
     private void clearDisplayCache() {
@@ -548,13 +573,13 @@ public class BackstoryEditScreen extends Screen {
             });
             int[] aint = intlist.toIntArray();
             boolean flag = i == s.length();
-            BookEditScreen.Pos2i bookeditscreen$pos2i;
+            BookEditScreen.Pos2i pos2i;
             if (flag && mutableboolean.isTrue()) {
-                bookeditscreen$pos2i = new BookEditScreen.Pos2i(0, list.size() * 9);
+                pos2i = new BookEditScreen.Pos2i(0, list.size() * 9);
             } else {
                 int k = findLineFromPos(aint, i);
                 int l = this.font.width(s.substring(aint[k], i));
-                bookeditscreen$pos2i = new BookEditScreen.Pos2i(l, k * 9);
+                pos2i = new BookEditScreen.Pos2i(l, k * 9);
             }
 
             List<Rect2i> list1 = Lists.newArrayList();
@@ -583,7 +608,7 @@ public class BackstoryEditScreen extends Screen {
             }
 
             return new DisplayCache(
-                    s, bookeditscreen$pos2i, flag, aint, list.toArray(new BookEditScreen.LineInfo[0]), list1.toArray(new Rect2i[0])
+                    s, pos2i, flag, aint, list.toArray(new BookEditScreen.LineInfo[0]), list1.toArray(new Rect2i[0])
             );
         }
     }
@@ -596,18 +621,18 @@ public class BackstoryEditScreen extends Screen {
     private Rect2i createPartialLineSelection(String input, StringSplitter splitter, int startPos, int endPos, int y, int lineStart) {
         String s = input.substring(lineStart, startPos);
         String s1 = input.substring(lineStart, endPos);
-        BookEditScreen.Pos2i bookeditscreen$pos2i = new BookEditScreen.Pos2i((int)splitter.stringWidth(s), y);
+        BookEditScreen.Pos2i pos2i = new BookEditScreen.Pos2i((int)splitter.stringWidth(s), y);
         BookEditScreen.Pos2i bookeditscreen$pos2i1 = new BookEditScreen.Pos2i((int)splitter.stringWidth(s1), y + 9);
-        return this.createSelection(bookeditscreen$pos2i, bookeditscreen$pos2i1);
+        return this.createSelection(pos2i, bookeditscreen$pos2i1);
     }
 
     private Rect2i createSelection(BookEditScreen.Pos2i corner1, BookEditScreen.Pos2i corner2) {
-        BookEditScreen.Pos2i bookeditscreen$pos2i = this.convertLocalToScreen(corner1);
-        BookEditScreen.Pos2i bookeditscreen$pos2i1 = this.convertLocalToScreen(corner2);
-        int i = Math.min(bookeditscreen$pos2i.x, bookeditscreen$pos2i1.x);
-        int j = Math.max(bookeditscreen$pos2i.x, bookeditscreen$pos2i1.x);
-        int k = Math.min(bookeditscreen$pos2i.y, bookeditscreen$pos2i1.y);
-        int l = Math.max(bookeditscreen$pos2i.y, bookeditscreen$pos2i1.y);
+        BookEditScreen.Pos2i pos2i = this.convertLocalToScreen(corner1);
+        BookEditScreen.Pos2i pos2i1 = this.convertLocalToScreen(corner2);
+        int i = Math.min(pos2i.x, pos2i1.x);
+        int j = Math.max(pos2i.x, pos2i1.x);
+        int k = Math.min(pos2i.y, pos2i1.y);
+        int l = Math.max(pos2i.y, pos2i1.y);
         return new Rect2i(i, k, j - i, l - k);
     }
 
