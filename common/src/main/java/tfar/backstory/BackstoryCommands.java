@@ -17,13 +17,23 @@ public class BackstoryCommands {
                         .requires(source -> source.hasPermission(Commands.LEVEL_GAMEMASTERS))
                                 .executes(BackstoryCommands::openEditSelf)
                         )
-                );
+                .then(Commands.literal("view")
+                        .executes(BackstoryCommands::openViewSelf)
+                )
+        );
     }
 
     static int openEditSelf(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         ServerPlayer player = ctx.getSource().getPlayerOrException();
         Services.PLATFORM.sendToClient(new S2CBackstoryScreenPacket(
                 DataAttachmentUtil.getBackstory(player),player.getUUID(), S2CBackstoryScreenPacket.Manage.EDIT),player);
+        return 1;
+    }
+
+    static int openViewSelf(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        ServerPlayer player = ctx.getSource().getPlayerOrException();
+        Services.PLATFORM.sendToClient(new S2CBackstoryScreenPacket(
+                DataAttachmentUtil.getBackstory(player),player.getUUID(), S2CBackstoryScreenPacket.Manage.VIEW),player);
         return 1;
     }
 }

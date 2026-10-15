@@ -1,8 +1,10 @@
 package tfar.backstory;
 
+import com.google.common.collect.Lists;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.network.Filterable;
@@ -41,5 +43,9 @@ public record PlayerBackstory(String chosenName,String gender, List<Filterable<S
 
     public boolean isValid() {
         return !chosenName.isBlank() && pages.size() <= PAGE_LIMIT;
+    }
+
+    public List<String> getPages(boolean filtered) {
+        return Lists.transform(this.pages, filterable -> filterable.get(filtered));
     }
 }
