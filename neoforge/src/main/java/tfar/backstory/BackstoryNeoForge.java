@@ -10,12 +10,11 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
-import org.spongepowered.asm.mixin.MixinEnvironment;
-import tfar.backstory.attachments.CommonDataAttachments;
 import tfar.backstory.attachments.DataAttachmentUtil;
 import tfar.backstory.network.PacketHandler;
-import tfar.backstory.network.client.S2COpenBackstoryScreenPacket;
+import tfar.backstory.network.client.S2CBackstoryScreenPacket;
 import tfar.backstory.platform.NeoForgePlatformHelper;
+import tfar.backstory.platform.Services;
 
 @Mod(Backstory.MOD_ID)
 public class BackstoryNeoForge {
@@ -39,7 +38,9 @@ public class BackstoryNeoForge {
         if (player instanceof ServerPlayer serverPlayer && !DataAttachmentUtil.hasBackstory(player)) {
             int tick = player.tickCount;
             if (tick == Backstory.WAIT_TIME) {
-                S2COpenBackstoryScreenPacket.EDIT.send(serverPlayer);
+                Services.PLATFORM.sendToClient(
+                        new S2CBackstoryScreenPacket(DataAttachmentUtil.getBackstory(player),player.getUUID(),
+                                S2CBackstoryScreenPacket.Manage.EDIT), serverPlayer);
             }
         }
     }

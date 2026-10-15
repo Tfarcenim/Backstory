@@ -1,5 +1,6 @@
 package tfar.backstory.platform;
 
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.Registry;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -106,5 +107,10 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     @Override
     public void sendToServer(C2SModPacket msg) {
         PacketDistributor.sendToServer(msg);
+    }
+
+    @Override
+    public void setShadow(EditBox editBox, boolean shadow) {
+        editBox.setTextShadow(shadow);
     }
 }

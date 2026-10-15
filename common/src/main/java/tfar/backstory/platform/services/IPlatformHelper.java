@@ -1,5 +1,6 @@
 package tfar.backstory.platform.services;
 
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -71,4 +72,6 @@ public interface IPlatformHelper {
 
     void sendToClient(S2CModPacket msg, ServerPlayer player);
     void sendToServer(C2SModPacket msg);
+
+    void setShadow(EditBox editBox,boolean shadow);
 }
