@@ -1,13 +1,17 @@
 package tfar.backstory.client;
 
+import com.google.common.collect.Lists;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.PageButton;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import tfar.backstory.Backstory;
+import tfar.backstory.PlayerBackstory;
 
+import java.util.List;
 import java.util.UUID;
 
 public abstract class BackstoryScreen extends Screen {
@@ -17,10 +21,26 @@ public abstract class BackstoryScreen extends Screen {
     protected static final int TEXTURE_WIDTH = 1995;
     protected static final int TEXTURE_HEIGHT = 240;
 
+    protected static final int BACKSTORY_LEFT = 144;
+    protected static final int BACKSTORY_TOP = 54;
+
+    protected static final int BACKSTORY_WIDTH = 108;
+    protected static final int BACKSTORY_HEIGHT = 140;
+
+    protected int left;
+    protected int top;
+
+    protected static final int NAME_Y = 120;
+    protected static final int GENDER_Y = 170;
+
+    protected  static final int TEXT_X = 45;
+
     public static final ResourceLocation BOOK_LOCATION = Backstory.id("textures/gui/image.png");
 
     protected static final int[] OPENING_FRAME_SEQUENCE = new int[]{0, 1, 2, 3};
     protected final UUID playerUUID;
+    protected final PlayerBackstory backstory;
+    protected final List<String> pages = Lists.newArrayList();
     protected int frame = 3;//there are 7 frames, 0 - 6
     protected int currentPage;
     protected Component numberOfPages = CommonComponents.EMPTY;
@@ -29,20 +49,44 @@ public abstract class BackstoryScreen extends Screen {
     long tickCount;
     protected final boolean playTurnSound = true;
 
-    protected BackstoryScreen(Component title, UUID playerUUID) {
+    protected BackstoryScreen(Component title, UUID playerUUID, PlayerBackstory backstory) {
         super(title);
         this.playerUUID = playerUUID;
+        this.backstory = backstory;
     }
 
     @Override
     protected void init() {
+        left = (this.width - IMAGE_WIDTH) / 2;
+        top = 2;
         super.init();
         this.createPageControlButtons();
     }
 
+
+    /**
+     * Moves the book to the specified page and returns true if it exists, {@code false} otherwise.
+     */
+    public boolean setPage(int pageNum) {
+        int i = Mth.clamp(pageNum, 0, this.pages.size() - 1);
+        if (i != this.currentPage) {
+            this.currentPage = i;
+            this.updateButtonVisibility();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * I'm not sure why this exists. The function it calls is public and does all the work.
+     */
+    protected boolean forcePage(int pageNum) {
+        return this.setPage(pageNum);
+    }
+
+
     protected void createPageControlButtons() {
-        int left = backgroundLeft();
-        int top = backgroundTop();
         int y = top + 190;
         this.forwardButton = this.addRenderableWidget(new PageButton(left + 225, y, true, button -> this.pageForward(), playTurnSound));
         this.backButton = this.addRenderableWidget(new PageButton(left + 36, y, false, button -> this.pageBack(), playTurnSound));
@@ -53,16 +97,25 @@ public abstract class BackstoryScreen extends Screen {
         if (this.currentPage > 0) {
             this.currentPage--;
         }
-
         this.updateButtonVisibility();
+        this.updatePageContent();
     }
 
     protected void pageForward() {
         if (this.currentPage < this.getNumPages() - 1) {
             this.currentPage++;
+        } else {
+            this.appendPageToBook();
+            if (this.currentPage < this.getNumPages() - 1) {
+                this.currentPage++;
+            }
         }
 
+        this.updatePageContent();
         this.updateButtonVisibility();
+    }
+
+    protected void appendPageToBook() {
     }
 
     @Override
@@ -71,15 +124,6 @@ public abstract class BackstoryScreen extends Screen {
         int u = frame * IMAGE_WIDTH;
         guiGraphics.blit(BOOK_LOCATION, (this.width - IMAGE_WIDTH + 16) / 2, 2, u, 0, IMAGE_WIDTH, IMAGE_HEIGHT,
                 TEXTURE_WIDTH, TEXTURE_HEIGHT);
-    }
-
-
-    protected int backgroundLeft() {
-        return (this.width - IMAGE_WIDTH) / 2;
-    }
-
-    protected int backgroundTop() {
-        return 2;
     }
 
     @Override
@@ -102,9 +146,30 @@ public abstract class BackstoryScreen extends Screen {
         renderLabels(guiGraphics, mouseX, mouseY);
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     */
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        switch (keyCode) {
+            case 266:
+                this.backButton.onPress();
+                return true;
+            case 267:
+                this.forwardButton.onPress();
+                return true;
+            default:
+                return super.keyPressed(keyCode, scanCode, modifiers);
+        }
+    }
+
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        int left = this.backgroundLeft();
-        int top = this.backgroundTop();
         int j1 = this.font.width(this.numberOfPages);
         guiGraphics.drawString(this.font, this.numberOfPages, left + 240 - j1, top + 44, 0, false);
         guiGraphics.drawString(font, Component.literal("RP Name"), left + 50, top + 94, 0, false);
@@ -120,5 +185,11 @@ public abstract class BackstoryScreen extends Screen {
         //.withoutShadow();
     }
 
-    protected abstract int getNumPages();
+    protected int getNumPages() {
+        return this.pages.size();
+    }
+
+    protected void updatePageContent() {
+        this.numberOfPages = this.getPageNumberMessage();
+    }
 }

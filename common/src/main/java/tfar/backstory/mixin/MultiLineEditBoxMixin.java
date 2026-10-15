@@ -20,8 +20,6 @@ public abstract class MultiLineEditBoxMixin extends AbstractScrollWidget impleme
     private int cursorColor = 0xffe0e0e0;
     @Unique
     private boolean shadow = true;
-    @Unique
-    private boolean showBackground = true;
 
     public MultiLineEditBoxMixin(int x, int y, int width, int height, Component message) {
         super(x, y, width, height, message);
@@ -42,21 +40,8 @@ public abstract class MultiLineEditBoxMixin extends AbstractScrollWidget impleme
         this.shadow = shadow;
     }
 
-    @Override
-    public void setShowBackground(boolean showBackground) {
-        this.showBackground = showBackground;
-    }
-
     @Redirect(method = "renderContents",at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;drawString(Lnet/minecraft/client/gui/Font;Ljava/lang/String;III)I"))
     private int renderWithHighlight(GuiGraphics instance, Font font, String text, int x, int y, int color) {
         return instance.drawString(font, text, x, y, textColor,shadow);
-    }
-
-
-    @Override
-    protected void renderBorder(GuiGraphics guiGraphics, int x, int y, int width, int height) {
-       if (showBackground) {
-           super.renderBorder(guiGraphics, x, y, width, height);
-       }
     }
 }
