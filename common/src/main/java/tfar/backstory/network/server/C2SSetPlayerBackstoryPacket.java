@@ -24,11 +24,15 @@ public record C2SSetPlayerBackstoryPacket(PlayerBackstory backstory, UUID player
 
     public void handleServer(ServerPlayer player) {
         boolean isEditingSelf = player.getUUID().equals(playerUUID);
-        if (backstory.isValid() && isAllowedToEdit(player,isEditingSelf)) {
-            DataAttachmentUtil.setBackstory(player, backstory);
-            if (isEditingSelf) {
-                DataAttachmentUtil.markCreatedBackstory(player);
-                DataAttachmentUtil.setCanEditBackStory(player,false);
+
+        ServerPlayer targetPlayer = player.server.getPlayerList().getPlayer(playerUUID);
+        if (targetPlayer != null) {
+            if (backstory.isValid() && isAllowedToEdit(player, isEditingSelf)) {
+                DataAttachmentUtil.setBackstory(targetPlayer, backstory);
+                if (isEditingSelf) {
+                    DataAttachmentUtil.markCreatedBackstory(player);
+                    DataAttachmentUtil.setCanEditBackStory(player, false);
+                }
             }
         }
     }

@@ -16,8 +16,8 @@ public class BackstoryViewScreen extends BackstoryScreen {
     private FittingMultiLineTextWidget page;
 
 
-    protected BackstoryViewScreen(Component title, UUID playerUUID, PlayerBackstory backstory) {
-        super(title,playerUUID, backstory);
+    protected BackstoryViewScreen(Component title, UUID playerUUID, PlayerBackstory backstory, int i) {
+        super(title,playerUUID, backstory, i);
         backstory.pages().forEach(backstoryPage ->
                 pages.add(backstoryPage.get(Minecraft.getInstance().isTextFilteringEnabled())));
     }
@@ -25,7 +25,7 @@ public class BackstoryViewScreen extends BackstoryScreen {
     @Override
     protected void init() {
         super.init();
-        page = new FittingMultiLineTextWidget(left+BACKSTORY_LEFT+2, top+BACKSTORY_TOP-1,BACKSTORY_WIDTH,BACKSTORY_HEIGHT,
+        page = new FittingMultiLineTextWidget(left+BACKSTORY_LEFT+3, top+BACKSTORY_TOP,BACKSTORY_WIDTH,BACKSTORY_HEIGHT,
                 Component.literal(backstory.getPages(Minecraft.getInstance().isTextFilteringEnabled()).get(currentPage)),font);
 
         page.setColor(0);
@@ -77,8 +77,9 @@ public class BackstoryViewScreen extends BackstoryScreen {
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         super.renderLabels(guiGraphics, mouseX, mouseY);
-        guiGraphics.drawString(font, Component.literal(backstory.chosenName()), left + TEXT_X, top + NAME_Y, 0, false);
-        guiGraphics.drawString(font, Component.literal(backstory.gender()), left +TEXT_X, top + GENDER_Y, 0, false);
+        int padding = 16;
+        guiGraphics.drawString(font, Component.literal(backstory.chosenName()), left + LEFT_TEXT_X, top + NAME_Y+padding, 0, false);
+        guiGraphics.drawString(font, backstory.gender().getTranslation(), left + LEFT_TEXT_X, top + GENDER_Y+padding, 0, false);
     }
 
     @Override

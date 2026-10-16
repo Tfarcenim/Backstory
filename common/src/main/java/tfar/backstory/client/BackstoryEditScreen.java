@@ -2,11 +2,13 @@ package tfar.backstory.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.network.Filterable;
+import tfar.backstory.Gender;
 import tfar.backstory.PlayerBackstory;
 import tfar.backstory.attachments.DataAttachmentUtil;
 import tfar.backstory.network.server.C2SSetPlayerBackstoryPacket;
@@ -19,12 +21,12 @@ public class BackstoryEditScreen extends BackstoryScreen {
 
     private MultiLineEditBox page;
     private EditBox nameEdit;
-    private EditBox genderEdit;
+    private CycleButton<Gender> genderEdit;
 
-    protected BackstoryEditScreen(Component title, UUID playerUUID,PlayerBackstory existingBackstory) {
-        super(title,playerUUID,existingBackstory);
+    protected BackstoryEditScreen(Component title, UUID playerUUID,PlayerBackstory existingBackstory,int bookColor) {
+        super(title,playerUUID,existingBackstory,bookColor);
 
-        if (!existingBackstory.isEmpty()) {
+        if (!existingBackstory.pages().isEmpty()) {
             for (Filterable<String> filterable : existingBackstory.pages()) {
                 pages.add(filterable.get(Minecraft.getInstance().isTextFilteringEnabled()));
             }
@@ -50,14 +52,20 @@ public class BackstoryEditScreen extends BackstoryScreen {
         //this.pages.setLineLimit(126 / 9);
         this.page.setValueListener(value -> this.pages.set(this.currentPage, value));
         this.addRenderableWidget(this.page);
+        int padding = 16;
+        nameEdit = initEditbox(NAME_Y+padding, Minecraft.getInstance().player.getName().getString());
+        genderEdit = CycleButton.builder(Gender::getTranslation).displayOnlyValue()
+                .withValues(Gender.VALUES)
+                .withInitialValue(backstory.gender()).create(
+                left+LEFT_TEXT_X-4,GENDER_Y+padding,60,16,Component.empty(),
+                (cycleButton, value) -> {
+        });//initEditbox(GENDER_Y+padding, "Male");
 
-        nameEdit = initEditbox(NAME_Y, Minecraft.getInstance().player.getName().getString());
-        genderEdit = initEditbox(GENDER_Y, "Male");
-
-        if (!backstory.isEmpty()) {
+        if (!backstory.chosenName().isBlank()) {
             nameEdit.setValue(backstory.chosenName());
-            genderEdit.setValue(backstory.gender());
         }
+
+        addRenderableWidget(genderEdit);
 
         createMenuControls();
 
@@ -83,7 +91,7 @@ public class BackstoryEditScreen extends BackstoryScreen {
     }
 
     private EditBox initEditbox(int yPos, String starter) {
-        EditBox editBox = new EditBox(this.font, left + TEXT_X, top + yPos, 98, 12, Component.translatable("name"));
+        EditBox editBox = new EditBox(this.font, left + LEFT_TEXT_X, top + yPos, 98, 12, Component.translatable("name"));
         editBox.setCanLoseFocus(true);
         editBox.setTextColor(-1);
         editBox.setTextColorUneditable(-1);

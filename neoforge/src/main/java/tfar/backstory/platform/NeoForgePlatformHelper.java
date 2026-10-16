@@ -136,5 +136,8 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     @Override
     public void refreshName(Player player) {
         player.refreshDisplayName();
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.refreshTabListName();
+        }
     }
 }

@@ -1,11 +1,14 @@
 package tfar.backstory.attachments;
 
+import com.mojang.serialization.Codec;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Unit;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 import tfar.backstory.PlayerBackstory;
@@ -24,12 +27,24 @@ public class CommonDataAttachments {
             .build("created_backstory")
     );
 
+    public static final CommonDataAttachment<Integer> BOOK_COLOR = register(CommonDataAttachment
+            .create(o -> (int) Math.floor(Math.random()*3))
+            .codec(Codec.intRange(0,3))
+            .sync(ByteBufCodecs.INT)
+            .build("book_color")
+    );
+
     public static final CommonDataAttachment<Unit> CAN_CHANGE_BACKSTORY = register(CommonDataAttachment
             .<Unit>create(o -> null)
             .codec(Unit.CODEC)
             .sync(StreamCodec.unit(Unit.INSTANCE))
             .build("can_change_backstory")
     );
+
+    public static final CommonDataAttachment<List<UUID>> CAN_VIEW = register(
+            CommonDataAttachment.<List<UUID>>create(o -> List.of())
+                    .codec(UUIDUtil.CODEC.listOf())
+                    .build("can_view"));
 
     public static final CommonDataAttachment<PlayerBackstory> BACKSTORY = register(
             CommonDataAttachment.create(o -> PlayerBackstory.NONE)

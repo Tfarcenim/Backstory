@@ -1,6 +1,7 @@
 package tfar.backstory.client;
 
 import com.google.common.collect.Lists;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.PageButton;
@@ -8,6 +9,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import tfar.backstory.Backstory;
 import tfar.backstory.PlayerBackstory;
 
@@ -30,12 +32,12 @@ public abstract class BackstoryScreen extends Screen {
     protected int left;
     protected int top;
 
-    protected static final int NAME_Y = 120;
-    protected static final int GENDER_Y = 170;
+    protected static final int NAME_Y = 100;
+    protected static final int GENDER_Y = 150;
 
-    protected  static final int TEXT_X = 45;
+    protected  static final int LEFT_TEXT_X = 50;
 
-    public static final ResourceLocation BOOK_LOCATION = Backstory.id("textures/gui/image.png");
+    protected final ResourceLocation BOOK_LOCATION;
 
     protected static final int[] OPENING_FRAME_SEQUENCE = new int[]{0, 1, 2, 3};
     protected final UUID playerUUID;
@@ -49,8 +51,9 @@ public abstract class BackstoryScreen extends Screen {
     long tickCount;
     protected final boolean playTurnSound = true;
 
-    protected BackstoryScreen(Component title, UUID playerUUID, PlayerBackstory backstory) {
+    protected BackstoryScreen(Component title, UUID playerUUID, PlayerBackstory backstory, int bookColor) {
         super(title);
+        BOOK_LOCATION = Backstory.id("textures/gui/image"+bookColor+".png");
         this.playerUUID = playerUUID;
         this.backstory = backstory;
     }
@@ -172,8 +175,15 @@ public abstract class BackstoryScreen extends Screen {
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         int j1 = this.font.width(this.numberOfPages);
         guiGraphics.drawString(this.font, this.numberOfPages, left + 240 - j1, top + 44, 0, false);
-        guiGraphics.drawString(font, Component.literal("RP Name"), left + 50, top + 94, 0, false);
-        guiGraphics.drawString(font, Component.literal("Gender"), left + 50, top + 144, 0, false);
+        guiGraphics.drawString(font, Component.literal("Name").withStyle(ChatFormatting.BOLD), left + LEFT_TEXT_X, top + NAME_Y, 0, false);
+        guiGraphics.drawString(font, Component.literal("Gender").withStyle(ChatFormatting.BOLD), left + LEFT_TEXT_X, top + GENDER_Y, 0, false);
+
+
+
+        Player player = profile.id().isPresent() ? minecraft.level.getPlayerByUUID(profile.id().get()) : null;
+        boolean flag1 = player != null && LivingEntityRenderer.isEntityUpsideDown(player);
+        boolean flag2 = player != null && player.isModelPartShown(PlayerModelPart.HAT);
+        PlayerFaceRenderer.draw(pGuiGraphics, PartiesClient.getPlayerSkin(profile.gameProfile()), x + 2, y + 2, 16, flag2, flag1);
     }
 
     protected void updateButtonVisibility() {

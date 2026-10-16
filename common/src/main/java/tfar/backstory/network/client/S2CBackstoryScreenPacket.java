@@ -2,6 +2,7 @@ package tfar.backstory.network.client;
 
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,7 +14,7 @@ import tfar.backstory.platform.Services;
 
 import java.util.UUID;
 
-public record S2CBackstoryScreenPacket(PlayerBackstory backstory, UUID player,Manage manage) implements S2CModPacket {
+public record S2CBackstoryScreenPacket(PlayerBackstory backstory, UUID player,int book_color,Manage manage) implements S2CModPacket {
 
     public enum Manage {
         EDIT,VIEW
@@ -21,8 +22,10 @@ public record S2CBackstoryScreenPacket(PlayerBackstory backstory, UUID player,Ma
 
     public static final StreamCodec<RegistryFriendlyByteBuf, S2CBackstoryScreenPacket> STREAM_CODEC =
             StreamCodec.composite(PlayerBackstory.STREAM_CODEC, S2CBackstoryScreenPacket::backstory,
-                    UUIDUtil.STREAM_CODEC, S2CBackstoryScreenPacket::player, MiscHelpers.enumStreamCodec(Manage.class),
-                    S2CBackstoryScreenPacket::manage, S2CBackstoryScreenPacket::new);
+                    UUIDUtil.STREAM_CODEC, S2CBackstoryScreenPacket::player,
+                    ByteBufCodecs.INT, S2CBackstoryScreenPacket::book_color,
+                    MiscHelpers.enumStreamCodec(Manage.class), S2CBackstoryScreenPacket::manage,
+                    S2CBackstoryScreenPacket::new);
 
     public static final Type<S2CBackstoryScreenPacket> TYPE = new Type<>(
             PacketHandler.packet(S2CBackstoryScreenPacket.class));

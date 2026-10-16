@@ -13,6 +13,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import tfar.backstory.attachments.DataAttachmentUtil;
+import tfar.backstory.datagen.BackstoryDatagen;
 import tfar.backstory.network.PacketHandler;
 import tfar.backstory.network.client.S2CBackstoryScreenPacket;
 import tfar.backstory.platform.NeoForgePlatformHelper;
@@ -24,6 +25,7 @@ public class BackstoryNeoForge {
     public BackstoryNeoForge(IEventBus eventBus) {
         eventBus.addListener(this::register);
         eventBus.addListener(this::network);
+        eventBus.addListener(BackstoryDatagen::gather);
         NeoForge.EVENT_BUS.addListener(this::commands);
         NeoForge.EVENT_BUS.addListener(this::playerTick);
         NeoForge.EVENT_BUS.addListener(this::editTabList);
@@ -44,6 +46,7 @@ public class BackstoryNeoForge {
             if (tick == Backstory.WAIT_TIME) {
                 Services.PLATFORM.sendToClient(
                         new S2CBackstoryScreenPacket(DataAttachmentUtil.getBackstory(player),player.getUUID(),
+                                DataAttachmentUtil.getOrCreateBookColor(player),
                                 S2CBackstoryScreenPacket.Manage.EDIT), serverPlayer);
             }
         }
@@ -66,7 +69,7 @@ public class BackstoryNeoForge {
         Player player = event.getEntity();
         PlayerBackstory backstory = DataAttachmentUtil.getBackstory(player);
 
-        if (backstory.isEmpty()) {
+        if (backstory.pages().isEmpty()) {
             event.setDisplayname(player.getName());
         } else {
             event.setDisplayname(Component.literal(backstory.chosenName()));
@@ -77,7 +80,7 @@ public class BackstoryNeoForge {
         Player player = event.getEntity();
         PlayerBackstory backstory = DataAttachmentUtil.getBackstory(player);
 
-        if (backstory.isEmpty()) {
+        if (backstory.pages().isEmpty()) {
             event.setDisplayName(player.getName());
         } else {
             event.setDisplayName(Component.literal(player.getName().getString() + " (" + backstory.chosenName() + ")"));
