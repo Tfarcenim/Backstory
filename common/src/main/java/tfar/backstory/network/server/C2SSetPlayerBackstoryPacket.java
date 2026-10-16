@@ -3,7 +3,6 @@ package tfar.backstory.network.server;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,16 +23,21 @@ public record C2SSetPlayerBackstoryPacket(PlayerBackstory backstory, UUID player
             PacketHandler.packet(C2SSetPlayerBackstoryPacket.class));
 
     public void handleServer(ServerPlayer player) {
-        if (backstory.isValid() && isAllowedToEdit(player)) {
+        boolean isEditingSelf = player.getUUID().equals(playerUUID);
+        if (backstory.isValid() && isAllowedToEdit(player,isEditingSelf)) {
             DataAttachmentUtil.setBackstory(player, backstory);
+            if (isEditingSelf) {
+                DataAttachmentUtil.markCreatedBackstory(player);
+                DataAttachmentUtil.setCanEditBackStory(player,false);
+            }
         }
     }
 
-    boolean isAllowedToEdit(ServerPlayer player) {
+    boolean isAllowedToEdit(ServerPlayer player, boolean isEditingSelf) {
         boolean sufficientPermission = player.hasPermissions(Commands.LEVEL_MODERATORS);
-        PlayerBackstory existing = DataAttachmentUtil.getBackstory(player);
-        if (player.getUUID().equals(playerUUID)) {//editing self
-            return sufficientPermission || existing.isEmpty();
+        if (isEditingSelf) {//editing self
+            return sufficientPermission || !DataAttachmentUtil.hasCreatedBackstory(player) ||
+                    DataAttachmentUtil.canChangeBackstory(player);
         }
         return sufficientPermission;
     }

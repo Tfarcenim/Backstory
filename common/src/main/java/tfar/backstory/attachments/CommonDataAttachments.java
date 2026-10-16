@@ -1,28 +1,53 @@
 package tfar.backstory.attachments;
 
-import com.mojang.serialization.Codec;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
-import tfar.backstory.Backstory;
+import net.minecraft.util.Unit;
+import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.Nullable;
 import tfar.backstory.PlayerBackstory;
 import tfar.backstory.platform.Services;
 
-import javax.swing.text.html.Option;
 import java.util.*;
 
 public class CommonDataAttachments {
 
     private static final Map<ResourceLocation,CommonDataAttachment<?>> MAP =new HashMap<>();
 
-    public static final CommonDataAttachment<Integer> SANITY =
-            register(CommonDataAttachment.create(o -> 0)
-                    .networkSynchronized(ByteBufCodecs.INT)
-                    .codec(Codec.INT)
-                    .build("sanity"));
+    public static final CommonDataAttachment<Unit> CREATED_BACKSTORY = register(CommonDataAttachment
+            .<Unit>create(o -> null)
+            .codec(Unit.CODEC)
+            .sync(StreamCodec.unit(Unit.INSTANCE))
+            .build("created_backstory")
+    );
+
+    public static final CommonDataAttachment<Unit> CAN_CHANGE_BACKSTORY = register(CommonDataAttachment
+            .<Unit>create(o -> null)
+            .codec(Unit.CODEC)
+            .sync(StreamCodec.unit(Unit.INSTANCE))
+            .build("can_change_backstory")
+    );
 
     public static final CommonDataAttachment<PlayerBackstory> BACKSTORY = register(
-            CommonDataAttachment.<PlayerBackstory>create(o -> PlayerBackstory.NONE)
-                    .networkSynchronized(PlayerBackstory.STREAM_CODEC)
+            CommonDataAttachment.create(o -> PlayerBackstory.NONE)
+                    .sync(new SyncHandler<>() {
+                        @Override
+                        public void write(RegistryFriendlyByteBuf buf, PlayerBackstory attachment, boolean initialSync) {
+                            PlayerBackstory.STREAM_CODEC.encode(buf, attachment);
+                        }
+
+                        @Override
+                        public @Nullable PlayerBackstory read(Object holder, RegistryFriendlyByteBuf buf, @Nullable PlayerBackstory previousValue) {
+                            PlayerBackstory backstory = PlayerBackstory.STREAM_CODEC.decode(buf);
+                            if (holder instanceof Player player) {
+                                Minecraft.getInstance().execute(() -> Services.PLATFORM.refreshName(player));
+                            }
+                            return backstory;
+                        }
+                    })
                     .codec(PlayerBackstory.CODEC)
                     .build("backstory")
     );

@@ -1,12 +1,14 @@
 package tfar.backstory;
 
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
@@ -24,6 +26,8 @@ public class BackstoryNeoForge {
         eventBus.addListener(this::network);
         NeoForge.EVENT_BUS.addListener(this::commands);
         NeoForge.EVENT_BUS.addListener(this::playerTick);
+        NeoForge.EVENT_BUS.addListener(this::editTabList);
+        NeoForge.EVENT_BUS.addListener(this::editDisplayName);
         // This method is invoked by the NeoForge mod loader when it is ready
         // to load your mod. You can access NeoForge and Common code in this
         // project.
@@ -35,7 +39,7 @@ public class BackstoryNeoForge {
 
     void playerTick(PlayerTickEvent.Pre event) {
         Player player = event.getEntity();
-        if (player instanceof ServerPlayer serverPlayer && !DataAttachmentUtil.hasBackstory(player)) {
+        if (player instanceof ServerPlayer serverPlayer && !DataAttachmentUtil.hasCreatedBackstory(player)) {
             int tick = player.tickCount;
             if (tick == Backstory.WAIT_TIME) {
                 Services.PLATFORM.sendToClient(
@@ -56,5 +60,27 @@ public class BackstoryNeoForge {
 
     void commands(RegisterCommandsEvent event) {
         BackstoryCommands.register(event.getDispatcher());
+    }
+
+    void editDisplayName(PlayerEvent.NameFormat event) {
+        Player player = event.getEntity();
+        PlayerBackstory backstory = DataAttachmentUtil.getBackstory(player);
+
+        if (backstory.isEmpty()) {
+            event.setDisplayname(player.getName());
+        } else {
+            event.setDisplayname(Component.literal(backstory.chosenName()));
+        }
+    }
+
+    void editTabList(PlayerEvent.TabListNameFormat event) {
+        Player player = event.getEntity();
+        PlayerBackstory backstory = DataAttachmentUtil.getBackstory(player);
+
+        if (backstory.isEmpty()) {
+            event.setDisplayName(player.getName());
+        } else {
+            event.setDisplayName(Component.literal(player.getName().getString() + " (" + backstory.chosenName() + ")"));
+        }
     }
 }

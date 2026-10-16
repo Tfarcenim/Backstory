@@ -8,6 +8,7 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.network.Filterable;
 import tfar.backstory.PlayerBackstory;
+import tfar.backstory.attachments.DataAttachmentUtil;
 import tfar.backstory.network.server.C2SSetPlayerBackstoryPacket;
 import tfar.backstory.platform.Services;
 
@@ -66,8 +67,12 @@ public class BackstoryEditScreen extends BackstoryScreen {
 
     protected void createMenuControls() {
         int y = 220;
-        this.addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> onClose())
-                .bounds(left+40, y, 98, 20).build());
+        Button cancel = this.addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> onClose())
+                .bounds(left + 40, y, 98, 20).build());
+
+        if (playerUUID.equals(this.minecraft.player.getUUID()) && !DataAttachmentUtil.hasCreatedBackstory(minecraft.player)) {
+            cancel.active = false;
+        }
 
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> {
             boolean b = this.saveChanges();

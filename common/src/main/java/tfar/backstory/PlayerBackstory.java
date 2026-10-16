@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.network.Filterable;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.component.WritableBookContent;
 
 import java.util.List;
@@ -47,5 +48,9 @@ public record PlayerBackstory(String chosenName,String gender, List<Filterable<S
 
     public List<String> getPages(boolean filtered) {
         return Lists.transform(this.pages, filterable -> filterable.get(filtered));
+    }
+
+    public boolean useNickname(Player player) {
+        return !chosenName.isBlank() && !player.getName().getString().equals(chosenName);
     }
 }
