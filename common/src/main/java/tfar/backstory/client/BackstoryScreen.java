@@ -1,20 +1,27 @@
 package tfar.backstory.client;
 
 import com.google.common.collect.Lists;
+import com.mojang.authlib.GameProfile;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.PageButton;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.resources.PlayerSkin;
+import net.minecraft.client.resources.SkinManager;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.PlayerModelPart;
+import net.minecraft.world.item.component.ResolvableProfile;
 import tfar.backstory.Backstory;
 import tfar.backstory.PlayerBackstory;
 
 import java.util.List;
-import java.util.UUID;
 
 public abstract class BackstoryScreen extends Screen {
 
@@ -32,15 +39,15 @@ public abstract class BackstoryScreen extends Screen {
     protected int left;
     protected int top;
 
-    protected static final int NAME_Y = 100;
-    protected static final int GENDER_Y = 150;
+    protected static final int NAME_Y = 124;
+    protected static final int GENDER_Y = NAME_Y + 36;
 
     protected  static final int LEFT_TEXT_X = 50;
 
     protected final ResourceLocation BOOK_LOCATION;
 
     protected static final int[] OPENING_FRAME_SEQUENCE = new int[]{0, 1, 2, 3};
-    protected final UUID playerUUID;
+    protected final ResolvableProfile playerUUID;
     protected final PlayerBackstory backstory;
     protected final List<String> pages = Lists.newArrayList();
     protected int frame = 3;//there are 7 frames, 0 - 6
@@ -51,7 +58,7 @@ public abstract class BackstoryScreen extends Screen {
     long tickCount;
     protected final boolean playTurnSound = true;
 
-    protected BackstoryScreen(Component title, UUID playerUUID, PlayerBackstory backstory, int bookColor) {
+    protected BackstoryScreen(Component title, ResolvableProfile playerUUID, PlayerBackstory backstory, int bookColor) {
         super(title);
         BOOK_LOCATION = Backstory.id("textures/gui/image"+bookColor+".png");
         this.playerUUID = playerUUID;
@@ -180,10 +187,17 @@ public abstract class BackstoryScreen extends Screen {
 
 
 
-        Player player = profile.id().isPresent() ? minecraft.level.getPlayerByUUID(profile.id().get()) : null;
+        Player player = playerUUID.id().isPresent() ? minecraft.level.getPlayerByUUID(playerUUID.id().get()) : null;
         boolean flag1 = player != null && LivingEntityRenderer.isEntityUpsideDown(player);
         boolean flag2 = player != null && player.isModelPartShown(PlayerModelPart.HAT);
-        PlayerFaceRenderer.draw(pGuiGraphics, PartiesClient.getPlayerSkin(profile.gameProfile()), x + 2, y + 2, 16, flag2, flag1);
+        PlayerFaceRenderer.draw(guiGraphics, getPlayerSkin(playerUUID.gameProfile()), left + 59, top + 48, 64, flag2, flag1);
+    }
+
+    public static ResourceLocation getPlayerSkin(GameProfile gameProfile) {
+        Minecraft minecraft = Minecraft.getInstance();
+        SkinManager skinManager = minecraft.getSkinManager();
+        PlayerSkin map = skinManager.getInsecureSkin(gameProfile);
+        return map.texture();
     }
 
     protected void updateButtonVisibility() {

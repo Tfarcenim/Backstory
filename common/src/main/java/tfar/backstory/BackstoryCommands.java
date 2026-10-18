@@ -12,6 +12,7 @@ import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.component.ResolvableProfile;
 import tfar.backstory.attachments.DataAttachmentUtil;
 import tfar.backstory.network.client.S2CBackstoryScreenPacket;
 import tfar.backstory.platform.Services;
@@ -47,11 +48,9 @@ public class BackstoryCommands {
                                 .executes(BackstoryCommands::requestViewPermission)
                         )
                 )
-                .then(Commands.literal("can_view")
+                .then(Commands.literal("show")
                         .then(Commands.argument("players", EntityArgument.players())
-                                .then(Commands.argument("allow", BoolArgumentType.bool())
-                                        .executes(BackstoryCommands::setCanView)
-                                )
+                                .executes(BackstoryCommands::showBackstory)
                         )
                 )
                 .then(Commands.literal("wipe")
@@ -72,8 +71,11 @@ public class BackstoryCommands {
         boolean hasPermission = isMod || DataAttachmentUtil.canChangeBackstory(player) || !DataAttachmentUtil.hasCreatedBackstory(player);
 
         if (hasPermission) {
+
+            ResolvableProfile resolvableProfile = new ResolvableProfile(player.getGameProfile());
+
             Services.PLATFORM.sendToClient(new S2CBackstoryScreenPacket(
-                    DataAttachmentUtil.getBackstory(player), player.getUUID(),DataAttachmentUtil.getOrCreateBookColor(player), S2CBackstoryScreenPacket.Manage.EDIT), player);
+                    DataAttachmentUtil.getBackstory(player),resolvableProfile,DataAttachmentUtil.getOrCreateBookColor(player), S2CBackstoryScreenPacket.Manage.EDIT), player);
             return 1;
         } else {
             source.sendFailure(Component.literal("You do not have permission to edit your backstory!"));
@@ -86,8 +88,10 @@ public class BackstoryCommands {
         ServerPlayer editingPlayer = source.getPlayerOrException();
         ServerPlayer targetPlayer = EntityArgument.getPlayer(ctx, "player");
 
+        ResolvableProfile resolvableProfile = new ResolvableProfile(targetPlayer.getGameProfile());
+
         Services.PLATFORM.sendToClient(new S2CBackstoryScreenPacket(
-                DataAttachmentUtil.getBackstory(targetPlayer), targetPlayer.getUUID(),DataAttachmentUtil.getOrCreateBookColor(targetPlayer), S2CBackstoryScreenPacket.Manage.EDIT), editingPlayer);
+                DataAttachmentUtil.getBackstory(targetPlayer), resolvableProfile,DataAttachmentUtil.getOrCreateBookColor(targetPlayer), S2CBackstoryScreenPacket.Manage.EDIT), editingPlayer);
         return 1;
     }
 
@@ -101,7 +105,9 @@ public class BackstoryCommands {
                 .append(Component.literal("[Accept?]")
                         .withStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)
                                 .withClickEvent(
-                                        new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/backstory can_view "+viewingPlayer.getGameProfile().getName()+" true"
+                                        new ClickEvent(
+                                                ClickEvent.Action.RUN_COMMAND, "/backstory show "+viewingPlayer.getGameProfile()
+                                                .getName()
                                         )))));
 
         return 1;
@@ -124,6 +130,22 @@ public class BackstoryCommands {
         return viewingPlayers.size();
     }
 
+    static int showBackstory(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
+        CommandSourceStack source = ctx.getSource();
+        ServerPlayer targetPlayer = source.getPlayerOrException();
+        Collection<ServerPlayer> viewingPlayers = EntityArgument.getPlayers(ctx, "players");
+
+        for (ServerPlayer viewingPlayer : viewingPlayers) {
+            ResolvableProfile resolvableProfile = new ResolvableProfile(targetPlayer.getGameProfile());
+            Services.PLATFORM.sendToClient(new S2CBackstoryScreenPacket(
+                    DataAttachmentUtil.getBackstory(targetPlayer),
+                    resolvableProfile,DataAttachmentUtil.getOrCreateBookColor(targetPlayer),
+                    S2CBackstoryScreenPacket.Manage.VIEW), viewingPlayer);
+        }
+
+        return viewingPlayers.size();
+    }
+
     static int openViewOther(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         CommandSourceStack source = ctx.getSource();
         ServerPlayer viewingPlayer = source.getPlayerOrException();
@@ -134,8 +156,11 @@ public class BackstoryCommands {
 
 
         if (isMod || hasViewPermission) {
+            ResolvableProfile resolvableProfile = new ResolvableProfile(targetPlayer.getGameProfile());
             Services.PLATFORM.sendToClient(new S2CBackstoryScreenPacket(
-                    DataAttachmentUtil.getBackstory(targetPlayer), targetPlayer.getUUID(),DataAttachmentUtil.getOrCreateBookColor(targetPlayer), S2CBackstoryScreenPacket.Manage.VIEW), viewingPlayer);
+                    DataAttachmentUtil.getBackstory(targetPlayer), resolvableProfile,
+                    DataAttachmentUtil.getOrCreateBookColor(targetPlayer),
+                    S2CBackstoryScreenPacket.Manage.VIEW), viewingPlayer);
             return 1;
         }
 
@@ -146,8 +171,9 @@ public class BackstoryCommands {
 
     static int openViewSelf(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException {
         ServerPlayer player = ctx.getSource().getPlayerOrException();
+        ResolvableProfile resolvableProfile = new ResolvableProfile(player.getGameProfile());
         Services.PLATFORM.sendToClient(new S2CBackstoryScreenPacket(
-                DataAttachmentUtil.getBackstory(player), player.getUUID(),DataAttachmentUtil.getOrCreateBookColor(player), S2CBackstoryScreenPacket.Manage.VIEW), player);
+                DataAttachmentUtil.getBackstory(player), resolvableProfile,DataAttachmentUtil.getOrCreateBookColor(player), S2CBackstoryScreenPacket.Manage.VIEW), player);
         return 1;
     }
 

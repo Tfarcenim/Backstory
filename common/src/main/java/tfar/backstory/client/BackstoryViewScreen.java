@@ -5,6 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.FittingMultiLineTextWidget;
 import net.minecraft.network.chat.*;
+import net.minecraft.world.item.component.ResolvableProfile;
 import tfar.backstory.AbstractScrollWidgetDuck;
 import tfar.backstory.MultiLineTextWidgetDuck;
 import tfar.backstory.PlayerBackstory;
@@ -16,7 +17,7 @@ public class BackstoryViewScreen extends BackstoryScreen {
     private FittingMultiLineTextWidget page;
 
 
-    protected BackstoryViewScreen(Component title, UUID playerUUID, PlayerBackstory backstory, int i) {
+    protected BackstoryViewScreen(Component title, ResolvableProfile playerUUID, PlayerBackstory backstory, int i) {
         super(title,playerUUID, backstory, i);
         backstory.pages().forEach(backstoryPage ->
                 pages.add(backstoryPage.get(Minecraft.getInstance().isTextFilteringEnabled())));

@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.MultiLineEditBox;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.network.Filterable;
+import net.minecraft.world.item.component.ResolvableProfile;
 import tfar.backstory.Gender;
 import tfar.backstory.PlayerBackstory;
 import tfar.backstory.attachments.DataAttachmentUtil;
@@ -23,7 +24,7 @@ public class BackstoryEditScreen extends BackstoryScreen {
     private EditBox nameEdit;
     private CycleButton<Gender> genderEdit;
 
-    protected BackstoryEditScreen(Component title, UUID playerUUID,PlayerBackstory existingBackstory,int bookColor) {
+    protected BackstoryEditScreen(Component title, ResolvableProfile playerUUID, PlayerBackstory existingBackstory, int bookColor) {
         super(title,playerUUID,existingBackstory,bookColor);
 
         if (!existingBackstory.pages().isEmpty()) {
@@ -123,7 +124,7 @@ public class BackstoryEditScreen extends BackstoryScreen {
                 this.pages.stream().map(Filterable::passThrough).toList());
 
         if (playerBackstory.isValid()) {
-            Services.PLATFORM.sendToServer(new C2SSetPlayerBackstoryPacket(playerBackstory, playerUUID));
+            Services.PLATFORM.sendToServer(new C2SSetPlayerBackstoryPacket(playerBackstory, playerUUID.id().orElse(null)));
             return true;
         }
 

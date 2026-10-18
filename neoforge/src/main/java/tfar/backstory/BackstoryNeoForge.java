@@ -4,6 +4,7 @@ package tfar.backstory;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -45,7 +46,7 @@ public class BackstoryNeoForge {
             int tick = player.tickCount;
             if (tick == Backstory.WAIT_TIME) {
                 Services.PLATFORM.sendToClient(
-                        new S2CBackstoryScreenPacket(DataAttachmentUtil.getBackstory(player),player.getUUID(),
+                        new S2CBackstoryScreenPacket(DataAttachmentUtil.getBackstory(player),new ResolvableProfile(player.getGameProfile()),
                                 DataAttachmentUtil.getOrCreateBookColor(player),
                                 S2CBackstoryScreenPacket.Manage.EDIT), serverPlayer);
             }
